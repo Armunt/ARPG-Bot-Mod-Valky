@@ -1,12 +1,11 @@
 const Discord = require('discord.js')
-const client = new Discord.Client()
+const client = new Discord.Client({intents: [`GUILDS`,`GUILD_MEMBERS`, `GUILD_PRESENCES`,`GUILD_MESSAGES`,`GUILD_MESSAGE_REACTIONS`]})
 const sql = require('sqlite')
 const fs = require('fs')
 const path = require('path')
 
 // connect to database
 sql.open('./database.sqlite')
-
 require('dotenv').config({path:__dirname+'/.env'})
 
 module.exports = {
@@ -94,9 +93,10 @@ client.on('message', async msg => {
 })
 
 client.on('ready', async () => {
-  console.log(`Playing on ${client.guilds.size} guilds with ${client.users.size - 1} users.`)
+  console.log(`Playing on ${client.guilds.cache.size} guilds with ${client.users.cache.size - 1} users.`)
   utils.generateDatabase(client)
 })
+
 
 client.on('guildCreate', (guild) => {
   console.log(`I have joined the guild ${guild.name}`)
@@ -118,6 +118,7 @@ client.on('guildMemberAdd', (member) => {
   }
 })
 
+//update NPM & DiscordJS lib to get Guilds
 client.login(process.env.TOKEN).then(() => {
-  //client.guilds.get(botsettings.botGuildID).channels.get(botsettings.botGuildReportChannelID).send('\`\`\`Bot was restarted..\`\`\`');
+    client.guilds.cache.get(botsettings.botGuildID).channels.cache.get(botsettings.botGuildReportChannelID).send('\`\`\`Bot was restarted..\`\`\`');
 })

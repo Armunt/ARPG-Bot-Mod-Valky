@@ -1,3 +1,5 @@
+const Weapon = require("./weapon")
+
 class Player {
   constructor (row, inventory) {
     this.inventory = inventory
@@ -5,6 +7,7 @@ class Player {
     this.health = parseFloat(row.health).toFixed(2)
     this.accuracy = row.accuracy
     this.critical = row.critical
+/* this only sets vars in base values. After this I had to overwrite with inventory items */ 
 
     this.getWeaponValues() // Access the database..
 
@@ -19,6 +22,7 @@ class Player {
   setHealth (value) {
     this.health = value
   }
+
 
   getWeapons () {
     if (this.player_weapon_left == undefined && this.player_weapon_right == undefined) {

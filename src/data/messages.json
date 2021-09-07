@@ -17,7 +17,7 @@
     "LIMIT": "Specify a lower value."
   },
   "error": {
-    "SQLITE_MISUSE": "Whoops, looks like someone reset the database! Contact the owner, valk#3277 if you have any questions. :eyes:"
+    "SQLITE_MISUSE": "Whoops, looks like someone reset the database!"
   },
   "action": {
     "PRIVATE_DM": "Sent in Private DM"

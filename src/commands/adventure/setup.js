@@ -14,7 +14,7 @@ module.exports.run = (client, msg, args) => {
 
   utils.sendEmbed(msg, 'What name would you like?').then(m => {
     const setup_name = utils.collector(msg)
-    setup_name.on('collect', message => {
+    setup_name.on('collect', async message => {
       name = message.content
 
       // Check if the name they inputted is too long.

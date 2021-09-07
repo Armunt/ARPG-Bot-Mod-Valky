@@ -32,7 +32,7 @@ module.exports.run = async (client, msg, args) => {
         yes.stop()
         no.stop()
 
-        await utils.removeAllReactions(m, msg.guild.me.hasPermission('MANAGE_MESSAGES'))
+        await utils.removeAllReactions(m, msg.guild.me.permissions.has('MANAGE_MESSAGES'))
         await utils.editEmbed(m, msg, `Okay, you're entering the ${random_location.name} with ${random_location.enemies} enemies..`)
 
         bot.enemies_defeated_userid.push(msg.author.id)
@@ -47,9 +47,9 @@ module.exports.run = async (client, msg, args) => {
         yes.stop()
         no.stop()
 
-        await utils.removeAllReactions(m, msg.guild.me.hasPermission('MANAGE_MESSAGES'))
+        await utils.removeAllReactions(m, msg.guild.me.permissions.has('MANAGE_MESSAGES'))
         await utils.editEmbed(m, msg, 'Do you want to search for another area?')
-        await utils.askToFindNewArea(client, msg, m, msg.guild.me.hasPermission('MANAGE_MESSAGES'))
+        await utils.askToFindNewArea(client, msg, m, msg.guild.me.permissions.has('MANAGE_MESSAGES'))
       })
     })
   }

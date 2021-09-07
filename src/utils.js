@@ -1,7 +1,9 @@
 const sql = require('sqlite');
 const Discord = require('discord.js');
+const Player = require('./classes/player');
 const botsettings = include('config.json');
 const messages = include('data/messages.json');
+const { MessageEmbed } = require('discord.js');
 
 module.exports = {
   embed,
@@ -29,7 +31,8 @@ module.exports = {
   generateDatabase,
   catchSQLError,
   clearEnemies,
-  random
+  random,
+  saveItemInInventory
 }
 
 function random(array) {
@@ -188,27 +191,26 @@ function validID(client, msg, arguments) {
 }
 
 function sendEmbed(msg, desc) {
-  return msg.channel.send(embed(desc, msg.guild.me.hasPermission('EMBED_LINKS')));
+  return msg.channel.send({ embeds: [embed(desc, msg.guild.me.permissions.has('EMBED_LINKS', true))] });
 }
 
 function editEmbed(m, msg, desc) {
-  return m.edit(embed(desc, msg.guild.me.hasPermission('EMBED_LINKS')));
+  return m.edit({ embeds: [embed(desc, msg.guild.me.permissions.has('EMBED_LINKS', true))]});
 }
 
 function embed(desc, condition) {
   if (!condition) {
     return desc;
   }
-  return ('', {
-    embed: {
-      description: desc,
-      color: 0x36393E
-    }
-  });
+  const embed = new MessageEmbed()
+    .setTitle('')
+    .setDescription(desc)
+    .setColor('0x36393E')
+  return embed;
 }
 
 function removeAllReactions(m, condition) {
-  if (condition) return m.clearReactions();
+  if (condition) return m.reactions.removeAll();
 
   if (m.reactions !== undefined) {
     return Promise.all(m.reactions.map((messageReaction) => {
@@ -217,7 +219,7 @@ function removeAllReactions(m, condition) {
       }
     }));
   } else {
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
       resolve();
     });
   }
@@ -229,15 +231,15 @@ function battleMessage(m, msg, player_action, enemy_action, player, enemy) {
       embed: {
         description: `${player_action} ${enemy_action}`,
         fields: [{
-            name: enemy.name,
-            value: `HP: **${parseFloat(enemy.health).toFixed(2)}** ${enemy.weapon_name}: ${parseFloat(enemy.weapon_damage).toFixed(2)}`,
-            inline: true
-          },
-          {
-            name: player.name,
-            value: `HP: **${parseFloat(player.health).toFixed(2)}** ${player.weapons}: ${parseFloat(player.damage).toFixed(2)}`,
-            inline: true
-          }
+          name: enemy.name,
+          value: `HP: **${parseFloat(enemy.health).toFixed(2)}** ${enemy.weapon_name}: ${parseFloat(enemy.weapon_damage).toFixed(2)}`,
+          inline: true
+        },
+        {
+          name: player.name,
+          value: `HP: **${parseFloat(player.health).toFixed(2)}** ${player.weapons}: ${parseFloat(player.damage).toFixed(2)}`,
+          inline: true
+        }
         ],
         color: 0x36393E
       }
@@ -248,7 +250,7 @@ function battleMessage(m, msg, player_action, enemy_action, player, enemy) {
 }
 
 function clean(text) {
-  if (typeof(text) === "string")
+  if (typeof (text) === "string")
     return text.replace(/`/g, "`" + String.fromCharCode(8203)).replace(/@/g, "@" + String.fromCharCode(8203));
   else
     return text;
@@ -268,10 +270,8 @@ function reactYesNo(reactionMessage) {
 }
 
 function emoteCollector(msg, reactionMessage, emotes, id) {
-  const filter = (reaction, user) => {
-    return emotes.includes(reaction.emoji.name) && user.id === id;
-  };
-  const collector = reactionMessage.createReactionCollector(filter);
+  const filter = (reaction, user) => emotes.includes(reaction.emoji.name) && user.id === id;
+  const collector = reactionMessage.createReactionCollector({filter, time: 15000});
 
   return collector;
 }
@@ -296,12 +296,13 @@ async function catchSQLError(err, client, msg) {
 async function generateDatabase(client) {
   await sql.run('CREATE TABLE IF NOT EXISTS userprofile (userid TEXT UNIQUE, name CHARACTER, age INTEGER, gender CHARACTER, health INTEGER, gold INTEGER, clan CHARACTER, level INTEGER, exp DOUBLE, lefthanditem INTEGER, righthanditem INTEGER, helmet INTEGER, chestplate INTEGER, leggings INTEGER, boots INTEGER, maxhealth INTEGER)'); //main user table
   await sql.run('CREATE TABLE IF NOT EXISTS settings (guildid TEXT UNIQUE)').then(() => {
-    for (const guild of client.guilds.values()) {
+    for (const guild of client.guilds.cache.values()) {
       sql.run('INSERT OR IGNORE INTO settings (guildid) VALUES (?)', [guild.id]);
     }
   });
   await sql.run('CREATE TABLE IF NOT EXISTS inventory (itemid INTEGER PRIMARY KEY AUTOINCREMENT, userid TEXT, equipSlot TEXT, type TEXT, damage DOUBLE, value INTEGER, accuracy DOUBLE, critical DOUBLE)');
   await sql.run('CREATE TABLE IF NOT EXISTS clan (userid TEXT, member TEXT)');
+  await sql.run('CREATE TABLE IF NOT EXISTS workerInfo (userprofileid TEXT, canWork TEXT, FOREIGN KEY(userprofileid) REFERENCES userprofile(userid))');
 }
 
 function gainExperience(msg, expGained) {
@@ -312,5 +313,12 @@ function gainExperience(msg, expGained) {
       row.level = curLevel;
       sql.run('UPDATE userprofile SET level = level + 1 WHERE userid = ?', [msg.author.id]);
     }
+  });
+}
+
+function saveItemInInventory(weaponBought, msg, equippedIn) {
+  console.log(JSON.stringify(weaponBought))
+  sql.get('select * from inventory where userid = ?', [msg.author.id]).then(inventRow => {
+    sql.run('INSERT INTO inventory (itemid, userid, equipSlot, type, damage, value, accuracy, critical) VALUES (?,?,?,?,?,?,?,?)', [weaponBought.id, msg.author.id, equippedIn, weaponBought.name, weaponBought.damage, weaponBought.value, weaponBought.accuracy, weaponBought.critical])
   });
 }

@@ -34,12 +34,12 @@ module.exports.run = async (client, msg, args) => {
 
       utils.reactYesNo(m)
 
-      const manageMessagesPerm = msg.guild.me.hasPermission('MANAGE_MESSAGES')
+      const manageMessagesPerm = msg.guild.me.permissions.has('MANAGE_MESSAGES')
 
       no.on('collect', (reaction, reactionMessage) => {
         yes.stop()
         no.stop()
-        utils.removeAllReactions(m, msg.guild.me.hasPermission('MANAGE_MESSAGES'))
+        utils.removeAllReactions(m, msg.guild.me.permissions.has('MANAGE_MESSAGES'))
         utils.editEmbed(m, msg, `You decide not to approach the ${enemy.name}. ${messages.leveling.FIND_OPPONENT}`)
         utils.askToFightAgain(client, msg, m, manageMessagesPerm)
       })
@@ -47,7 +47,7 @@ module.exports.run = async (client, msg, args) => {
       yes.on('collect', async (reaction, reactionMessage) => {
         yes.stop()
         no.stop()
-        utils.removeAllReactions(m, msg.guild.me.hasPermission('MANAGE_MESSAGES')).then(async () => {
+        utils.removeAllReactions(m, msg.guild.me.permissions.has('MANAGE_MESSAGES')).then(async () => {
           if (Math.random() < enemy.fleechance) {
             utils.editEmbed(m, msg, `The ${enemy.name} manages to get away! ${messages.leveling.FIND_OPPONENT}`)
             utils.askToFightAgain(client, msg, m, manageMessagesPerm)
@@ -142,7 +142,7 @@ module.exports.run = async (client, msg, args) => {
                       }
                     }
                   }
-
+                  console.log(typeof(enemy.value))
                   await utils.gainExperience(msg, enemy.value)
                   let extra_hp = (Math.random() * (Math.cbrt(enemy.value) / 2))
                   const coins = Math.floor((Math.random() * enemy.value) + 1)
@@ -155,7 +155,7 @@ module.exports.run = async (client, msg, args) => {
                     }
                     sql.run('UPDATE userprofile SET gold = ? WHERE userid = ?', [row.gold + parseInt(coins), msg.author.id])
                     sql.run('UPDATE userprofile SET maxhealth = ? WHERE userid = ?', [row.maxhealth + parseFloat(extra_hp), msg.author.id])
-                    sql.run('UPDATE userprofile SET health = ? WHERE userid = ?', [row.maxhealth + parseFloat(extra_hp), msg.author.id])
+                    sql.run('UPDATE userprofile SET health = ? WHERE userid = ?', [parseFloat(player.health) + parseFloat(extra_hp), msg.author.id])
                   } else {
                     const MESSAGE_NO_LOOT = `You do not find anything on the corpse! You gained **${enemy.value}** experience, you now have ${Math.floor(row.exp + enemy.value)} experience. You gain **${extra_hp.toFixed(2)}** max health, now you have ${Math.floor(row.maxhealth + parseFloat(extra_hp))} max health.`
                     if (area_completed) {
@@ -166,7 +166,6 @@ module.exports.run = async (client, msg, args) => {
                     extra_hp = (Math.random() * (Math.cbrt(enemy.value) / 8))
 
                     sql.run('UPDATE userprofile SET maxhealth = ? WHERE userid = ?', [row.maxhealth + parseFloat(extra_hp), msg.author.id])
-                    sql.run('UPDATE userprofile SET health = ? WHERE userid = ?', [row.maxhealth + parseFloat(extra_hp), msg.author.id])
                   }
 
                   if (area_completed) {

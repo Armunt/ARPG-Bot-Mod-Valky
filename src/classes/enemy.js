@@ -26,7 +26,7 @@ class Enemy {
     this.weapon_name = weapon.name
     this.weapon_value = weapon.value
 
-    this.value = ((parseFloat(this.health) + parseFloat(this.weapon_damage)) / 2).toFixed(2)
+    this.value = parseFloat((parseFloat(this.health) + parseFloat(this.weapon_damage)) / 2).toFixed(2)
   }
 
   dynamicDamage (value) {

@@ -18,10 +18,11 @@ module.exports.run = async (client, msg, args) => {
         var dateWork = moment()
         dateWork.add(1, 'h')
         await sql.run('UPDATE userprofile set gold = ? WHERE userid = ?', [row.gold += coins, msg.author.id])
-        await sql.run('INSERT INTO workerInfo (userprofileid, canWork) VALUES (?, ?)', [row.userid, dateWork.toString()])
+        await sql.run('INSERT INTO workerInfo (userprofileid, canWork) VALUES (?, ?)', [row.userid, dateWork])
       }
       else {
-        if (workerInfoRow.canWork < Date.now()) {
+        let canWork = moment(new Date(workerInfoRow.canWork).toISOString())
+        if (moment().isAfter(canWork)) {
           utils.sendEmbed(msg, `Comienzas a trabajar, vuelve en 1 hora para reclamar tus ${coins} Oro`)
           var dateWork = moment()
           dateWork.add(1, 'h')
@@ -29,7 +30,7 @@ module.exports.run = async (client, msg, args) => {
           await sql.run('UPDATE workerInfo set canWork = ? where userprofileid = ?', [dateWork.toString(), row.userid])
         }
         else{
-          var momentDate = moment(workerInfoRow.canWork)
+          var momentDate = moment(new Date(workerInfoRow.canWork).toISOString())
           utils.sendEmbed(msg, `Ya te encuentras trabajando, vuelve a las ${momentDate.format('hh:mm A')} para ganar mas oro`)
         }
       }
